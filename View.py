@@ -244,6 +244,9 @@ class Ball(pygame.sprite.Sprite):
     def update(self, field):
         self.x = self.tile_size // 2 + (self.tile_size * field.ball.x)
         self.y = self.tile_size // 2 + (self.tile_size * field.ball.y)
+        if self.game.state == 'wait':
+            self.x = 350
+            self.y = 350
         if self.game.color == 'blue':
             self.image = self.ball_b
         else:
