@@ -32,9 +32,9 @@ class View:
         self.ball = pygame.sprite.GroupSingle()
         self.ball.add(Ball(self.field, self.tile_size, self.game))
 
-        self.click = pygame.mixer.Sound('sound/click.wav')
-        self.kick_sound = pygame.mixer.Sound('sound/kick.wav')
-        self.win = pygame.mixer.Sound('sound/win.wav')
+        self.click = pygame.mixer.Sound('sound/click.mp3')
+        self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
+        self.win = pygame.mixer.Sound('sound/win.mp3')
 
     def run(self):
         count = 300
