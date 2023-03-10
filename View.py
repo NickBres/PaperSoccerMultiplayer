@@ -35,9 +35,9 @@ class View:
         # ////////////////////////////////////////////////////////////////////////////////////////
         # /////////////////////////////////may corrupt when run in linux////////////////////////
         # ////////////////////////////////////////////////////////////////////////////////////////
-        self.click = pygame.mixer.Sound('sound/click.mp3')
-        self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
-        self.win = pygame.mixer.Sound('sound/win.mp3')
+        #self.click = pygame.mixer.Sound('sound/click.mp3')
+        #self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
+        #self.win = pygame.mixer.Sound('sound/win.mp3')
         # ////////////////////////////////////////////////////////////////////////////////////////
 
     def run(self):
@@ -54,7 +54,7 @@ class View:
                             for tile in self.grass_tiles:
                                 if tile.check_click(event.pos):
                                     self.controller.send_move(tile.x // self.tile_size, tile.y // self.tile_size)
-                                    self.kick_sound.play()
+                                    #self.kick_sound.play()
                         else:
                             print('Wait for your turn')
 
@@ -62,7 +62,7 @@ class View:
                     if event.type == pygame.MOUSEBUTTONUP:
                         for button in self.buttons:
                             if button.check_click(event.pos):
-                                self.click.play()
+                                #self.click.play()
                                 if button.type == 'Up1':
                                     self.counts.sprites()[0].increase()
                                 if button.type == 'Down1':
@@ -78,7 +78,7 @@ class View:
                 if self.screen_num == 2:  # end
                     if event.type == pygame.MOUSEBUTTONUP:
                         if self.again.sprite.check_click(event.pos):
-                            self.click.play()
+                            #self.click.play()
                             self.controller.send_again()
 
 

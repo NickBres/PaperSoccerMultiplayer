@@ -219,11 +219,11 @@ class Server:
                     elif window_size + sent < threshold:  # congestion avoidance
                         window_size += 1
                 else:  # if packet was lost
-                    sent -= window_size
+                    sent -= max(window_size, 0)
                     window_size = max(window_size // 2, 1)
                     threshold /= 2
             except socket.timeout:
-                sent -= window_size
+                sent -= max(window_size, 0)
                 window_size = max(window_size // 2, 1)
                 threshold /= 2
             self.udp_socket.settimeout(None)
@@ -235,7 +235,6 @@ class Server:
                 break
         print("Game sent successfully")
         self.lock.release()
-
 
     def isNeedToUpdate(self, address):
         self.lock.acquire()
@@ -250,13 +249,11 @@ class Server:
         self.lock.release()
         return False
 
-
     def switchPlayer(self):
         ballX = self.game.field.ball.x
         ballY = self.game.field.ball.y
         if not self.game.field.points[ballY][ballX].isVisited:
             self.isBlueMove = not self.isBlueMove
-
 
     def is_server_full(self):
         return self.players['blue'] is not None and self.players['red'] is not None
