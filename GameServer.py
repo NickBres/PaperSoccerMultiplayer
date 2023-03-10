@@ -144,8 +144,10 @@ class Server:
             print('exit received')
             if self.players['blue'] == address:  # delete players from the dictionary
                 self.players['blue'] = None
+                self.isSomethingChanged['blue'] = True
             elif self.players['red'] == address:
                 self.players['red'] = None
+                self.isSomethingChanged['red'] = True
             if self.players['blue'] is None and self.players['red'] is None:  # if both players left restart the game
                 self.isGameOver = True
                 self.restart_game()
@@ -166,6 +168,7 @@ class Server:
 
     def restart_game(self):
         if self.isGameOver:
+            print('game restarted')
             self.game = Model.Game()  # initialize game
             self.isGameStarted = False
             self.isGameOver = False
@@ -213,6 +216,7 @@ class Server:
                     window_size = max(window_size // 2, 1)
                     threshold = window_size
                 elif ack == "WRONG_SEQ":
+                    sent -= window_size
                     window_size = max(window_size // 2, 1)
                     threshold = window_size
             except socket.timeout:
