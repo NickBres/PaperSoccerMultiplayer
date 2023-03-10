@@ -202,9 +202,9 @@ class Server:
                 self.udp_socket.settimeout(1)
                 ack = self.udp_socket.recv(1024).decode()
                 if ack == "ACK":
-                    if window_size * 2 < threshold:
+                    if window_size * 2 < threshold:  # slow start
                         window_size *= 2
-                    else:
+                    else:  # congestion avoidance
                         window_size += 1
                 elif ack == "TIMEOUT":
                     window_size = max(window_size // 2, 1)
