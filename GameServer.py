@@ -222,6 +222,8 @@ class Server:
                     sent -= max(window_size, 0)
                     window_size = max(window_size // 2, 1)
                     threshold /= 2
+                    print("Packet lost")
+                    print(f"Sent {sent} packets, window size: {window_size}, threshold: {threshold}")
             except socket.timeout:
                 sent -= max(window_size, 0)
                 window_size = max(window_size // 2, 1)
