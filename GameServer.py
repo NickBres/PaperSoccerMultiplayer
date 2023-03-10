@@ -140,7 +140,7 @@ class Server:
             self.isGameOver = self.game.is_game_over()  # check if game is over
             self.isSomethingChanged['blue'] = True  # update blue player when asked
             self.isSomethingChanged['red'] = True   # update red player when asked
-        elif packet.message == 'exit':
+        elif packet.message == 'exit':  # player exited from the game (only normal exit. will not work if error occurs)
             print('exit received')
             if self.players['blue'] == address:  # delete players from the dictionary
                 self.players['blue'] = None
@@ -207,12 +207,12 @@ class Server:
             try:
                 self.udp_socket.settimeout(1)
                 ack = self.udp_socket.recv(1024).decode()
-                if ack == "ACK":
+                if ack == "ACK":  # if packet was received successfully
                     if window_size * 2 < threshold:  # slow start
                         window_size *= 2
                     else:  # congestion avoidance
                         window_size += 1
-                elif ack == "TIMEOUT":
+                elif ack == "TIMEOUT":  # if packet was lost
                     window_size = max(window_size // 2, 1)
                     threshold = window_size
                 elif ack == "WRONG_SEQ":
@@ -222,7 +222,7 @@ class Server:
             except socket.timeout:
                 window_size = max(window_size // 2, 1)
             self.udp_socket.settimeout(None)
-        self.udp_socket.sendto("END".encode(), client_address)
+        self.udp_socket.sendto("END".encode(), client_address) # send end of transmission
         print("Game sent successfully")
         self.lock.release()
 

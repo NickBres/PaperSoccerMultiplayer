@@ -88,7 +88,7 @@ class Client:
                 return client_ip, dns_ip
 
     def get_game_ip(self):
-        print("Broadcasting DNS request...")
+        print("Create DNS request...")
 
         # Create a DNS request packet
         eth = Ether(src=self.CLIENT_MAC, dst="ff:ff:ff:ff:ff:ff")
@@ -115,35 +115,35 @@ class Client:
 
     def connect_to_game(self):
         print("Connecting to game server...")
-        self.client_socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.client_socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP socket for receiving game data
         self.client_socket_udp.settimeout(5)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  # TCP socket for sending commands
             client_socket.connect((self.GAME_SERVER_IP, self.GAME_SERVER_PORT))
             print("Connected to game server")
             self.client_socket = client_socket
-            packet = Packet.Packet("connect")
+            packet = Packet.Packet("connect")  # Ask the server to connect the client to the game
             client_socket.sendall(packet.serialize())
-            # self.get_game_from_server(client_socket)
+            # self.get_game_from_server(client_socket)  # TCP
             self.get_game_from_server_udp()
-            self.view = View.View(self, self.game)
-            self.view.run()
+            self.view = View.View(self, self.game)  # Create the view (GUI)
+            self.view.run()  # Start the view
 
     def game_update(self):
         print("Updating game...")
-        packet = Packet.Packet("update")
+        packet = Packet.Packet("update")  # Ask the server to update the game
         self.client_socket.sendall(packet.serialize())
-        # self.get_game_from_server(client_socket)
+        # self.get_game_from_server(client_socket) # TCP
         self.get_game_from_server_udp()
-        self.view.set_game(self.game)
-        if not self.isGameInitialized and self.game.state == 'play':
+        self.view.set_game(self.game)  # Update the view with the new game
+        if not self.isGameInitialized and self.game.state == 'play':  # If the game wasn't initialized
             self.isGameInitialized = True
             self.view.game_init()
-        self.view.change_screen()
+        self.view.change_screen()  # Change the screen if needed (e.g. from menu to game)
 
     def get_game_from_server(self, client_socket):
         data = client_socket.recv(64000)
-        packet = Packet.PacketGame()
-        packet.deserialize(data)
+        packet = Packet.PacketGame()  # Create a packet to deserialize the game
+        packet.deserialize(data)  # Deserialize the game from received data
         self.game = packet.game
 
     def get_game_from_server_udp(self):
