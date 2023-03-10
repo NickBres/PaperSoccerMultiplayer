@@ -177,7 +177,7 @@ class Client:
                 SEPARATOR.encode())  # Split the packet to the data, the sequence number and the window size
             seq = int(seq)
             isLast = int(isLast)
-            print(f"Received packet {seq} of {isLast}")
+            print(f"Received packet {seq} is Last in Window: {isLast}")
             packets[seq] = part  # Add the data to the packets list
 
             if seq != curr:  # If the sequence number is not the expected one
