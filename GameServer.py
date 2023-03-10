@@ -93,7 +93,7 @@ class Server:
             self.game.set_state('play')  # start the game
             self.isGameStarted = True
             self.isSomethingChanged['blue'] = True  # update blue player when asked
-            self.isSomethingChanged['red'] = True   # update red player when asked
+            self.isSomethingChanged['red'] = True  # update red player when asked
         elif packet.message == 'update?':  # player wants to know if he needs to update the game
             print('update? received')
             packet = Packet.Packet()  # create a packet object
@@ -133,13 +133,13 @@ class Server:
             self.send_game_rudp()
         elif packet.message == 'move':  # player wants to move
             packet_move = Packet.PacketMove()  # create a packet object
-            packet_move.deserialize(bpacket)   # deserialize data from client and fill the packet object
+            packet_move.deserialize(bpacket)  # deserialize data from client and fill the packet object
             self.game.set_move(packet_move.x, packet_move.y, self.isBlueMove)  # make a move if it is possible
             self.switchPlayer()  # switch player if needed
             self.game.set_visited()  # set visited cells
             self.isGameOver = self.game.is_game_over()  # check if game is over
             self.isSomethingChanged['blue'] = True  # update blue player when asked
-            self.isSomethingChanged['red'] = True   # update red player when asked
+            self.isSomethingChanged['red'] = True  # update red player when asked
         elif packet.message == 'exit':  # player exited from the game (only normal exit. will not work if error occurs)
             print('exit received')
             if self.players['blue'] == address:  # delete players from the dictionary
@@ -180,6 +180,7 @@ class Server:
     def send_game_rudp(self):
         self.lock.acquire()  # synchronize threads
         message, client_address = self.udp_socket.recvfrom(1024)  # receive message from client to get his address
+        self.udp_socket.sendto(b"ACK", client_address)  # send ack to client
         print('Sending game using rudp to: ', client_address)
         packet_game = Packet.PacketGame(self.game)
         data = packet_game.serialize()
@@ -197,8 +198,11 @@ class Server:
                 if i >= len(packets):
                     break
                 try:
+                    isLast = 0
+                    if i == sent + window_size - 1:
+                        isLast = 1
                     data = packets[i] + SEPARATOR.encode() + str(i).encode() + SEPARATOR.encode() + str(
-                        window_size).encode()
+                        isLast).encode()
                     self.udp_socket.sendto(data, client_address)
                 except socket.error:
                     print("Error sending packet")
@@ -206,25 +210,32 @@ class Server:
             sent += window_size
             try:
                 self.udp_socket.settimeout(1)
-                ack = self.udp_socket.recv(1024).decode()
-                if ack == "ACK":  # if packet was received successfully
-                    if window_size * 2 < threshold:  # slow start
+                ack = self.udp_socket.recv(1024)
+                if ack == b"ACK":  # if packet was received successfully
+                    print("Sent " + str(sent) + " packets")
+                    print("Window size: " + str(window_size) + " Threshold: " + str(threshold))
+                    if window_size * 2 + sent < threshold:  # slow start
                         window_size *= 2
-                    else:  # congestion avoidance
+                    elif window_size + sent < threshold:  # congestion avoidance
                         window_size += 1
-                elif ack == "TIMEOUT":  # if packet was lost
-                    window_size = max(window_size // 2, 1)
-                    threshold = window_size
-                elif ack == "WRONG_SEQ":
+                else:  # if packet was lost
                     sent -= window_size
                     window_size = max(window_size // 2, 1)
-                    threshold = window_size
+                    threshold /= 2
             except socket.timeout:
+                sent -= window_size
                 window_size = max(window_size // 2, 1)
+                threshold /= 2
             self.udp_socket.settimeout(None)
-        self.udp_socket.sendto("END".encode(), client_address) # send end of transmission
+        while True:  # send end of transmission
+            self.udp_socket.sendto(b"END", client_address)  # send end of transmission
+            self.udp_socket.settimeout(1)
+            ack = self.udp_socket.recv(1024).decode()
+            if ack == "ACK":
+                break
         print("Game sent successfully")
         self.lock.release()
+
 
     def isNeedToUpdate(self, address):
         self.lock.acquire()
@@ -239,11 +250,13 @@ class Server:
         self.lock.release()
         return False
 
+
     def switchPlayer(self):
         ballX = self.game.field.ball.x
         ballY = self.game.field.ball.y
         if not self.game.field.points[ballY][ballX].isVisited:
             self.isBlueMove = not self.isBlueMove
+
 
     def is_server_full(self):
         return self.players['blue'] is not None and self.players['red'] is not None

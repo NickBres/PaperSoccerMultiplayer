@@ -14,7 +14,11 @@ import Packet
 
 
 class Client:
-    DEVICE = "en0"
+    # ///////////////////////////////////////
+    # //       Dont forget to check        //
+    # ///////////////////////////////////////
+    DEVICE = "en0"  # en0 for mac, enp0s1 for VM ubuntu
+    # ///////////////////////////////////////
 
     CLIENT_PORT = 5050
     CLIENT_IP = '127.0.0.1'
@@ -116,7 +120,7 @@ class Client:
     def connect_to_game(self):
         print("Connecting to game server...")
         self.client_socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP socket for receiving game data
-        self.client_socket_udp.settimeout(5)
+        self.client_socket_udp.settimeout(2)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  # TCP socket for sending commands
             client_socket.connect((self.GAME_SERVER_IP, self.GAME_SERVER_PORT))
             print("Connected to game server")
@@ -149,44 +153,49 @@ class Client:
     def get_game_from_server_udp(self):
         print("Getting game from server rudp...")
         SEPARATOR = "<BARAK>"
-        self.client_socket_udp.sendto(b"update", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
-        time.sleep(1)
+        while True:  # Ask the server to update the game until we get an ACK
+            self.client_socket_udp.sendto(b"update", (
+                self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))  # Ask the server to update the game
+            packet, addr = self.client_socket_udp.recvfrom(1024)  # Receive an ACK from the server
+            if packet == b"ACK":
+                break
+
         curr = 0
         packets = [None] * 64
-        data = b""
-        curr_window = 0
         print("Loading game...")
         while True:
             try:
-                packet, addr = self.client_socket_udp.recvfrom(2048)
+                packet, addr = self.client_socket_udp.recvfrom(2048)  # Receive a packet from the server
             except socket.timeout:
                 print("Timeout")
-                self.client_socket_udp.sendto(b"TIMEOUT", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 continue
             if packet == b"END":
+                self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 break
 
-            part, seq, window_size = packet.split(SEPARATOR.encode())
+            part, seq, isLast = packet.split(
+                SEPARATOR.encode())  # Split the packet to the data, the sequence number and the window size
             seq = int(seq)
-            window_size = int(window_size)
-            packets[seq] = part
+            isLast = int(isLast)
+            print(f"Received packet {seq} of {isLast}")
+            packets[seq] = part  # Add the data to the packets list
 
-            if seq != curr:
-                self.client_socket_udp.sendto(b"WRONG_SEQ", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
-            elif curr_window < window_size:
+            if seq != curr:  # If the sequence number is not the expected one
+                self.client_socket_udp.sendto(b"NACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
+            elif isLast:
                 curr += 1
-                curr_window = window_size
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
             else:
                 curr += 1
             # time.sleep(0.1)
 
         print("Game received")
-        data = b"".join(packets[:curr])
-        packetGame = Packet.PacketGame()
-        packetGame.deserialize(data)
-        self.game = packetGame.game
+        data = b"".join(packets[:curr])  # Join all the packets to one data
+        packetGame = Packet.PacketGame()  # Create a packet to deserialize the game
+        packetGame.deserialize(data)  # Deserialize the game from received data
+        self.game = packetGame.game  # Update the game
         print("Game deserialized")
+
 
     def ask_for_update(self):
         print("Asking for update...")
@@ -200,35 +209,40 @@ class Client:
         else:
             print("No update available")
 
-    def send_options(self, width, height):
-        packet = Packet.PacketOptions(width, height)
-        self.client_socket.sendall(packet.serialize())
+
+    def send_options(self, width, height):  # Send the options to the server to create a new game
+        packet = Packet.PacketOptions(width, height)  # Create a packet with the options
+        self.client_socket.sendall(packet.serialize())  # Send the packet to the server
         time.sleep(1)
-        self.ask_for_update()
+        self.ask_for_update()  # Ask for an update to get the game
+
 
     def send_move(self, toX, toY):
         print(f"Sending move to ({toX}, {toY})")
-        packet = Packet.PacketMove(toX, toY)
-        self.client_socket.sendall(packet.serialize())
+        packet = Packet.PacketMove(toX, toY)  # Create a packet with the move
+        self.client_socket.sendall(packet.serialize())  # Send the packet to the server
         time.sleep(1)
-        self.ask_for_update()
+        self.ask_for_update()  # Ask for an update to get the updated game
 
-    def send_again(self):
+
+    def send_again(self):  # Send a message to the server to start a new game
         print("Sending again...")
-        packet = Packet.Packet("again")
-        self.client_socket.sendall(packet.serialize())
-        # self.get_game_from_server(self.client_socket)
+        packet = Packet.Packet("again")  # Create a packet with the message
+        self.client_socket.sendall(packet.serialize())  # Send the packet to the server
+        # self.get_game_from_server(self.client_socket) # TCP
         self.get_game_from_server_udp()
-        self.view = View.View(self, self.game)
-        self.ask_for_update()
-        self.view.run()
+        self.view = View.View(self, self.game)  # Initialize the view (GUI)
+        self.ask_for_update()  # Ask for an update to get the updated game
+        self.view.run()  # Start the view
 
-    def send_exit(self):
+
+    def send_exit(self):  # Send a message to the server about the client's exit
         print("Sending exit...")
         packet = Packet.Packet("exit")
         self.client_socket.sendall(packet.serialize())
         time.sleep(1)
         self.client_socket.close()
+        self.client_socket_udp.close()
 
 
 if __name__ == '__main__':
