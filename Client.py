@@ -16,19 +16,21 @@ import Packet
 class Client:
     DEVICE = "en0"
 
-    CLIENT_PORT = 68
-    CLIENT_IP = None
+    CLIENT_PORT = 5050
+    CLIENT_IP = '127.0.0.1'
     CLIENT_MAC = str(get_if_hwaddr(DEVICE))
 
     DHCP_PORT = 67
     DNS_IP = None
     GAME_SERVER_IP = '127.0.0.1'
     GAME_SERVER_PORT = 5000
+    GAME_SERVER_PORT_UDP = 5001
 
     game = Model.Game()
     view = None
     view_thread = None
     client_socket = None
+    client_socket_udp = None
     isGameInitialized = False
 
     def __init__(self):
@@ -113,56 +115,116 @@ class Client:
 
     def connect_to_game(self):
         print("Connecting to game server...")
+        self.client_socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.client_socket_udp.settimeout(5)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             client_socket.connect((self.GAME_SERVER_IP, self.GAME_SERVER_PORT))
             print("Connected to game server")
             self.client_socket = client_socket
             packet = Packet.Packet("connect")
             client_socket.sendall(packet.serialize())
-            self.get_game_from_server(client_socket)
+            # self.get_game_from_server(client_socket)
+            self.get_game_from_server_udp()
             self.view = View.View(self, self.game)
             self.view.run()
-
 
     def game_update(self):
         print("Updating game...")
         packet = Packet.Packet("update")
         self.client_socket.sendall(packet.serialize())
-        self.get_game_from_server(self.client_socket)
+        # self.get_game_from_server(client_socket)
+        self.get_game_from_server_udp()
         self.view.set_game(self.game)
         if not self.isGameInitialized and self.game.state == 'play':
             self.isGameInitialized = True
             self.view.game_init()
         self.view.change_screen()
 
-    def get_game_from_server(self,client_socket):
+    def get_game_from_server(self, client_socket):
         data = client_socket.recv(64000)
         packet = Packet.PacketGame()
         packet.deserialize(data)
         self.game = packet.game
 
+    def get_game_from_server_udp(self):
+        print("Getting game from server rudp...")
+        SEPARATOR = "<BARAK>"
+        self.client_socket_udp.sendto(b"update", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
+        time.sleep(1)
+        curr = 0
+        packets = [None] * 64
+        data = b""
+        curr_window = 0
+        print("Loading game...")
+        while True:
+            try:
+                packet, addr = self.client_socket_udp.recvfrom(2048)
+            except socket.timeout:
+                print("Timeout")
+                self.client_socket_udp.sendto(b"TIMEOUT", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
+                continue
+            if packet == b"END":
+                break
+
+            part, seq, window_size = packet.split(SEPARATOR.encode())
+            seq = int(seq)
+            window_size = int(window_size)
+            packets[seq] = part
+
+            if seq != curr:
+                self.client_socket_udp.sendto(b"WRONG_SEQ", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
+            elif curr_window < window_size:
+                curr += 1
+                curr_window = window_size
+                self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
+            else:
+                curr += 1
+            # time.sleep(0.1)
+
+        print("Game received")
+        data = b"".join(packets[:curr])
+        packetGame = Packet.PacketGame()
+        packetGame.deserialize(data)
+        self.game = packetGame.game
+        print("Game deserialized")
+
+    def ask_for_update(self):
+        print("Asking for update...")
+        packet = Packet.Packet("update?")
+        self.client_socket.sendall(packet.serialize())
+        data = self.client_socket.recv(1024)
+        packet.deserialize(data)
+        if packet.message == "yes":
+            print("Update is available")
+            self.game_update()
+        else:
+            print("No update available")
+
     def send_options(self, width, height):
         packet = Packet.PacketOptions(width, height)
         self.client_socket.sendall(packet.serialize())
         time.sleep(1)
-        self.game_update()
+        self.ask_for_update()
 
     def send_move(self, toX, toY):
-        packet = Packet.PacketMove(toX,toY)
+        print(f"Sending move to ({toX}, {toY})")
+        packet = Packet.PacketMove(toX, toY)
         self.client_socket.sendall(packet.serialize())
         time.sleep(1)
-        self.game_update()
+        self.ask_for_update()
 
     def send_again(self):
+        print("Sending again...")
         packet = Packet.Packet("again")
         self.client_socket.sendall(packet.serialize())
-        self.get_game_from_server(self.client_socket)
+        # self.get_game_from_server(self.client_socket)
+        self.get_game_from_server_udp()
         self.view = View.View(self, self.game)
-        self.game_update()
+        self.ask_for_update()
         self.view.run()
 
-
     def send_exit(self):
+        print("Sending exit...")
         packet = Packet.Packet("exit")
         self.client_socket.sendall(packet.serialize())
         time.sleep(1)

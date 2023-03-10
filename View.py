@@ -32,9 +32,9 @@ class View:
         self.ball = pygame.sprite.GroupSingle()
         self.ball.add(Ball(self.field, self.tile_size, self.game))
 
-        self.click = pygame.mixer.Sound('sound/click.mp3')
-        self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
-        self.win = pygame.mixer.Sound('sound/win.mp3')
+        self.click = pygame.mixer.Sound('sound/click.wav')
+        self.kick_sound = pygame.mixer.Sound('sound/kick.wav')
+        self.win = pygame.mixer.Sound('sound/win.wav')
 
     def run(self):
         count = 300
@@ -49,8 +49,8 @@ class View:
                         if self.game.isYourTurn:
                             for tile in self.grass_tiles:
                                 if tile.check_click(event.pos):
-                                    if self.controller.send_move(tile.x // self.tile_size, tile.y // self.tile_size):
-                                        self.kick_sound.play()
+                                    self.controller.send_move(tile.x // self.tile_size, tile.y // self.tile_size)
+                                    self.kick_sound.play()
                         else:
                             print('Wait for your turn')
 
@@ -103,7 +103,7 @@ class View:
             if self.game.state == 'wait' or self.game.state == 'wait move':
                 count -= 1
                 if count == 0:
-                    self.controller.game_update()
+                    self.controller.ask_for_update()
                     count = 300
 
 
@@ -249,7 +249,7 @@ class Ball(pygame.sprite.Sprite):
         else:
             self.image = self.ball_r
         if self.game.state == 'wait' or self.game.state == 'play':
-            self.angle += 10
+            self.angle += 5
             angle = self.angle % 360
             self.image = pygame.transform.rotate(self.image, angle)
         self.rect = self.image.get_rect(center=(self.x, self.y))

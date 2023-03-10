@@ -34,8 +34,8 @@ class Game:
 
     def set_move(self, x, y, isBlue):
         self.lock.acquire()
-        print('move: ', x, y, isBlue)
         if self.field.can_move(x, y):
+            print(f'move to {x}, {y} isBlue = {isBlue}')
             self.field.move(x, y, isBlue)
             if self.field.no_moves():
                 if isBlue:
@@ -162,7 +162,6 @@ class Field:
         return self.points[y][x] in neighbours
 
     def move(self, toX, toY, isBlue):
-        print('move', toX, toY, isBlue)
         if not isBlue:
             self.blue_lines.append((self.points[self.ball.y][self.ball.x], self.points[toY][toX]))
         else:
