@@ -181,13 +181,13 @@ class Server:
         print('Waiting for client to connect...')
         while True:
             try:
-                message, client_address = self.server_socket.recvfrom(1024)  # receive message from client to get his address
+                message, client_address = self.udp_socket.recvfrom(1024)  # receive message from client to get his address
             except socket.timeout:
                 continue
             if message == b'connect':
-                self.server_socket.sendto(b'SYNACK', client_address)
+                self.udp_socket.sendto(b'SYNACK', client_address)
                 try:
-                    message, client_address = self.server_socket.recvfrom(1024)  # receive ACK
+                    message, client_address = self.udp_socket.recvfrom(1024)  # receive ACK
                 except socket.timeout:
                     break
                 if message == b'ACK':
@@ -248,8 +248,11 @@ class Server:
             self.udp_socket.settimeout(None)
         while True:  # send end of transmission
             self.udp_socket.sendto(b"END", client_address)  # send end of transmission
-            self.udp_socket.settimeout(5)
-            ack = self.udp_socket.recv(1024).decode()
+            self.udp_socket.settimeout(2)
+            try:
+                ack = self.udp_socket.recv(1024).decode()
+            except socket.timeout:
+                continue
             if ack == "ACK":
                 break
         print("Game sent successfully")

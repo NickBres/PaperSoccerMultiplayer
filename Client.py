@@ -180,6 +180,7 @@ class Client:
                 print("Timeout")
                 continue
             if packet == b"END":
+                print("Game received")
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 break
 
