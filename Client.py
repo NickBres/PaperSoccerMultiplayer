@@ -150,15 +150,25 @@ class Client:
         packet.deserialize(data)  # Deserialize the game from received data
         self.game = packet.game
 
+    def three_way_handshake(self):
+        print("Three way handshake...")
+        while True:
+            self.client_socket_udp.sendto(b"connect", (
+                self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
+            try:
+                packet, addr = self.client_socket_udp.recvfrom(2048)  # Receive SynAck from the server
+            except socket.timeout:
+                print("Timeout No SynAck")
+                continue
+            if packet == b"SYNACK":
+                self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
+                break
+
     def get_game_from_server_udp(self):
         print("Getting game from server rudp...")
         SEPARATOR = "<BARAK>"
-        while True:  # Ask the server to update the game until we get an ACK
-            self.client_socket_udp.sendto(b"update", (
-                self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))  # Ask the server to update the game
-            packet, addr = self.client_socket_udp.recvfrom(1024)  # Receive an ACK from the server
-            if packet == b"ACK":
-                break
+
+        self.three_way_handshake()
 
         curr = 0
         packets = [None] * 64
@@ -173,16 +183,23 @@ class Client:
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 break
 
-            part, seq, isLast = packet.split(
+            part, seq, first, last = packet.split(
                 SEPARATOR.encode())  # Split the packet to the data, the sequence number and the window size
             seq = int(seq)
-            isLast = int(isLast)
-            print(f"Received packet {seq} is Last in Window: {isLast}")
+            first = int(first)  # 1 if first in window, 2 if last in window
+            last = int(last)
+            print(f"Received packet {seq} in window ({first} : {last})")
             packets[seq] = part  # Add the data to the packets list
 
-            if seq != curr:  # If the sequence number is not the expected one
+            if seq == first:
+                curr = seq
+
+            if seq == last and curr != seq:  # If the sequence number is not the expected one
+                print(f'got {seq} expected {curr}')
                 self.client_socket_udp.sendto(b"NACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
-            elif isLast:
+                window_size = last - first + 1
+                curr = max(0, curr - window_size)
+            elif seq == last:
                 curr += 1
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
             else:
@@ -190,12 +207,12 @@ class Client:
             # time.sleep(0.1)
 
         print("Game received")
+        print(curr)
         data = b"".join(packets[:curr])  # Join all the packets to one data
         packetGame = Packet.PacketGame()  # Create a packet to deserialize the game
         packetGame.deserialize(data)  # Deserialize the game from received data
         self.game = packetGame.game  # Update the game
         print("Game deserialized")
-
 
     def ask_for_update(self):
         print("Asking for update...")
@@ -209,13 +226,11 @@ class Client:
         else:
             print("No update available")
 
-
     def send_options(self, width, height):  # Send the options to the server to create a new game
         packet = Packet.PacketOptions(width, height)  # Create a packet with the options
         self.client_socket.sendall(packet.serialize())  # Send the packet to the server
         time.sleep(1)
         self.ask_for_update()  # Ask for an update to get the game
-
 
     def send_move(self, toX, toY):
         print(f"Sending move to ({toX}, {toY})")
@@ -223,7 +238,6 @@ class Client:
         self.client_socket.sendall(packet.serialize())  # Send the packet to the server
         time.sleep(1)
         self.ask_for_update()  # Ask for an update to get the updated game
-
 
     def send_again(self):  # Send a message to the server to start a new game
         print("Sending again...")
@@ -234,7 +248,6 @@ class Client:
         self.view = View.View(self, self.game)  # Initialize the view (GUI)
         self.ask_for_update()  # Ask for an update to get the updated game
         self.view.run()  # Start the view
-
 
     def send_exit(self):  # Send a message to the server about the client's exit
         print("Sending exit...")

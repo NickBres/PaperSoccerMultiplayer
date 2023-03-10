@@ -27,7 +27,7 @@ class Server:
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket.bind((self.SERVER_IP, self.SERVER_PORT_UDP))
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.udp_socket.settimeout(1)
+        self.udp_socket.settimeout(5)
 
         # Create a TCP socket to connect between players and server
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
@@ -177,10 +177,29 @@ class Server:
         packet_game = Packet.PacketGame(self.game)  # create a packet object with game
         client_socket.sendall(packet_game.serialize())
 
+    def three_way_handshake(self):
+        print('Waiting for client to connect...')
+        while True:
+            try:
+                message, client_address = self.server_socket.recvfrom(1024)  # receive message from client to get his address
+            except socket.timeout:
+                continue
+            if message == b'connect':
+                self.server_socket.sendto(b'SYNACK', client_address)
+                try:
+                    message, client_address = self.server_socket.recvfrom(1024)  # receive ACK
+                except socket.timeout:
+                    break
+                if message == b'ACK':
+                    print('Client connected')
+                    break
+        return client_address
+
+
+
     def send_game_rudp(self):
         self.lock.acquire()  # synchronize threads
-        message, client_address = self.udp_socket.recvfrom(1024)  # receive message from client to get his address
-        self.udp_socket.sendto(b"ACK", client_address)  # send ack to client
+        client_address = self.three_way_handshake()  # receive message from client to get his address
         print('Sending game using rudp to: ', client_address)
         packet_game = Packet.PacketGame(self.game)
         data = packet_game.serialize()
@@ -198,11 +217,9 @@ class Server:
                 if i >= len(packets):
                     break
                 try:
-                    isLast = 0
-                    if i == sent + window_size - 1:
-                        isLast = 1
+                    last = sent + window_size - 1
                     data = packets[i] + SEPARATOR.encode() + str(i).encode() + SEPARATOR.encode() + str(
-                        isLast).encode()
+                        sent).encode() + SEPARATOR.encode() + str(last).encode()
                     self.udp_socket.sendto(data, client_address)
                 except socket.error:
                     print("Error sending packet")
@@ -231,7 +248,7 @@ class Server:
             self.udp_socket.settimeout(None)
         while True:  # send end of transmission
             self.udp_socket.sendto(b"END", client_address)  # send end of transmission
-            self.udp_socket.settimeout(1)
+            self.udp_socket.settimeout(5)
             ack = self.udp_socket.recv(1024).decode()
             if ack == "ACK":
                 break
