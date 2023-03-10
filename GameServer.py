@@ -12,46 +12,49 @@ class Server:
     SERVER_PORT_UDP = 5001
 
     lock = Lock()
-    players = {"blue": None, "red": None}
-    players_udp = {"blue": None, "red": None}
+    players = {"blue": None, "red": None}  # (ip, port) for TCP
     game = Model.Game()
     isBlueMove = True
 
     isGameStarted = False
     isGameOver = False
 
-    isSomethingChanged = {"blue": False, "red": False}
+    isSomethingChanged = {"blue": False, "red": False}  # to manage updates for players
 
     def __init__(self):
+
+        # Create a UDP socket to send Game Data
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket.bind((self.SERVER_IP, self.SERVER_PORT_UDP))
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.settimeout(1)
 
+        # Create a TCP socket to connect between players and server
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
             server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
             server_socket.bind((self.SERVER_IP, self.SERVER_PORT))
-            server_socket.listen(2)
+            server_socket.listen(2)  # 2 players
             print("Game Server is ready")
 
             threads = []
             print(f"Listening on {self.SERVER_IP}:{self.SERVER_PORT}")
 
+            # Accept connections from players
             while True:
                 client_socket, address = server_socket.accept()
 
                 thread = threading.Thread(target=self.client_handler, args=(client_socket, address))
-                thread.start()
+                thread.start()  # start a new thread for each client connection
                 threads.append(thread)
 
-    def add_player(self, address, color):
+    def add_player(self, address, color):  # save player's address in a dictionary
         self.lock.acquire()
         self.players[color] = address
         print(self.players)
         self.lock.release()
 
-    def client_handler(self, client_socket, address):
+    def client_handler(self, client_socket, address):  # handle client requests
         client_addr = f"{address[0]}:{address[1]}"
         client_prefix = f"{{{client_addr}}}"
         with client_socket:
@@ -63,14 +66,14 @@ class Server:
                 self.process_request(address, client_socket, bpacket)
 
     def process_request(self, address, client_socket, bpacket):
-        packet = Packet.Packet()
-        packet.deserialize(bpacket)
+        packet = Packet.Packet()  # create a packet object
+        packet.deserialize(bpacket)  # deserialize data from client and fill the packet object
         if packet.message == 'connect' and self.game.state == 'not initialized':  # blue player
             print('first player connected')
             self.game.set_state('menu')
             self.game.set_color('blue')
             self.add_player(address, 'blue')
-            # self.send_game(client_socket)
+            # self.send_game(client_socket)  # tcp
             self.send_game_rudp()
         elif packet.message == 'connect' and not self.is_server_full():  # red player
             print('second player connected')
@@ -80,29 +83,29 @@ class Server:
                 color = 'blue'
             self.game.set_color(color)
             self.add_player(address, color)
-            # self.send_game(client_socket)
+            # self.send_game(client_socket) # tcp
             self.send_game_rudp()
-        elif packet.message == 'options':
+        elif packet.message == 'options':  # player sent options for the game
             print('options received')
-            packet_options = Packet.PacketOptions()
-            packet_options.deserialize(bpacket)
-            self.game.set_field(packet_options.width, packet_options.height)
-            self.game.set_state('play')
+            packet_options = Packet.PacketOptions()  # create a packet object
+            packet_options.deserialize(bpacket)  # deserialize data from client and fill the packet object
+            self.game.set_field(packet_options.width, packet_options.height)  # set field size
+            self.game.set_state('play')  # start the game
             self.isGameStarted = True
-            self.isSomethingChanged['blue'] = True
-            self.isSomethingChanged['red'] = True
-        elif packet.message == 'update?':
+            self.isSomethingChanged['blue'] = True  # update blue player when asked
+            self.isSomethingChanged['red'] = True   # update red player when asked
+        elif packet.message == 'update?':  # player wants to know if he needs to update the game
             print('update? received')
-            packet = Packet.Packet()
+            packet = Packet.Packet()  # create a packet object
             if self.isNeedToUpdate(address):
                 print('update request approved')
-                packet.message = 'yes'
+                packet.message = 'yes'  # send yes if player needs to update
             else:
                 print('update request denied')
-                packet.message = 'no'
+                packet.message = 'no'  # send no if player doesn't need to update
             client_socket.send(packet.serialize())
 
-        elif packet.message == 'update':
+        elif packet.message == 'update':  # player wants to update the game
             if self.isGameStarted:
                 if self.players['blue'] == address:  # blue player
                     print('blue player update request received')
@@ -126,27 +129,27 @@ class Server:
                         self.game.isYourTurn = True
                         if not self.isGameOver:
                             self.game.set_state('play')
-            # self.send_game(client_socket)
+            # self.send_game(client_socket)  # tcp
             self.send_game_rudp()
-        elif packet.message == 'move':
-            packet_move = Packet.PacketMove()
-            packet_move.deserialize(bpacket)
-            self.game.set_move(packet_move.x, packet_move.y, self.isBlueMove)
-            self.switchPlayer()
-            self.game.set_visited()
-            self.isGameOver = self.game.is_game_over()
-            self.isSomethingChanged['blue'] = True
-            self.isSomethingChanged['red'] = True
+        elif packet.message == 'move':  # player wants to move
+            packet_move = Packet.PacketMove()  # create a packet object
+            packet_move.deserialize(bpacket)   # deserialize data from client and fill the packet object
+            self.game.set_move(packet_move.x, packet_move.y, self.isBlueMove)  # make a move if it is possible
+            self.switchPlayer()  # switch player if needed
+            self.game.set_visited()  # set visited cells
+            self.isGameOver = self.game.is_game_over()  # check if game is over
+            self.isSomethingChanged['blue'] = True  # update blue player when asked
+            self.isSomethingChanged['red'] = True   # update red player when asked
         elif packet.message == 'exit':
             print('exit received')
-            if self.players['blue'] == address:
+            if self.players['blue'] == address:  # delete players from the dictionary
                 self.players['blue'] = None
             elif self.players['red'] == address:
                 self.players['red'] = None
-            if self.players['blue'] is None and self.players['red'] is None:
+            if self.players['blue'] is None and self.players['red'] is None:  # if both players left restart the game
                 self.isGameOver = True
                 self.restart_game()
-        elif packet.message == 'again':
+        elif packet.message == 'again':  # player wants to play again. return to menu
             self.restart_game()
             if self.players['blue'] == address:
                 print('blue player again request received')
@@ -158,17 +161,17 @@ class Server:
                 self.game.set_color('red')
                 self.game.set_state('wait')
                 self.isSomethingChanged['red'] = True
-            # self.send_game(client_socket)
+            # self.send_game(client_socket)  # tcp
             self.send_game_rudp()
 
     def restart_game(self):
         if self.isGameOver:
-            self.game = Model.Game()
+            self.game = Model.Game()  # initialize game
             self.isGameStarted = False
             self.isGameOver = False
 
     def send_game(self, client_socket):
-        packet_game = Packet.PacketGame(self.game)
+        packet_game = Packet.PacketGame(self.game)  # create a packet object with game
         client_socket.sendall(packet_game.serialize())
 
     def send_game_rudp(self):
