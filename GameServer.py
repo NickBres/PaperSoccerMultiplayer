@@ -221,13 +221,13 @@ class Server:
                 else:  # if packet was lost
                     sent -= max(window_size, 0)
                     window_size = max(window_size // 2, 1)
-                    threshold /= 2
+                    threshold = max(threshold // 2, 1)
                     print("Packet lost")
                     print(f"Sent {sent} packets, window size: {window_size}, threshold: {threshold}")
             except socket.timeout:
                 sent -= max(window_size, 0)
                 window_size = max(window_size // 2, 1)
-                threshold /= 2
+                threshold = max(threshold // 2, 1)
             self.udp_socket.settimeout(None)
         while True:  # send end of transmission
             self.udp_socket.sendto(b"END", client_address)  # send end of transmission
