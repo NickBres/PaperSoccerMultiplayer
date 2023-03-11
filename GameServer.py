@@ -191,7 +191,7 @@ class Server:
                 break_count += 1
                 if break_count == 5:
                     print('Client did not connect')
-                    break
+                    return None
                 continue
 
             if message == b'connect':
@@ -204,7 +204,7 @@ class Server:
                     except socket.timeout:
                         break_count += 1
                         if break_count == 5:
-                            break
+                            return None
                         continue
                     if message == b'ACK':
                         print('Client connected')
