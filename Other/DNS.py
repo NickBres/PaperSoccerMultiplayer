@@ -5,7 +5,7 @@ from scapy.layers.l2 import Ether
 
 import socket
 
-DEVICE = "en0"
+DEVICE = "enp0s1"
 DNS_PORT = 53
 DNS_IP = "127.0.0.3"
 
