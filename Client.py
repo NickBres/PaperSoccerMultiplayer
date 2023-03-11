@@ -130,7 +130,6 @@ class Client:
             self.view = View.View(self)  # Create the view (GUI)
             self.view.run()  # Start the view
 
-
     def game_update(self):
         print("Updating game...")
         packet = Packet.Packet("update")  # Ask the server to update the game
@@ -173,10 +172,11 @@ class Client:
 
         self.three_way_handshake()
 
-        curr = 0
+        count = 0
         packets = [None] * 64
         print("Loading game...")
         break_count = 0
+        sum = 0
         while True:
             try:
                 packet, addr = self.client_socket_udp.recvfrom(2048)  # Receive a packet from the server
@@ -201,28 +201,25 @@ class Client:
             first = int(first)  # 1 if first in window, 2 if last in window
             last = int(last)
             print(f"Received packet {seq} in window ({first} : {last})")
-            if packets[first] is None:
-                curr = first
             packets[seq] = part  # Add the data to the packets list
+            count += 1
 
-            if seq == last and curr != seq:  # If the sequence number is not the expected one
-                print(f'got {seq} expected {curr}')
+            if seq == last and count != last - first + 1:  # If the sequence number is not the expected one
+                print(f'got {count} packets but expected {last - first + 1}')
                 self.client_socket_udp.sendto(b"NACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 window_size = last - first + 1
-                curr = max(0, curr - window_size)
+                count = 0
                 print('something went wrong. NACK sent')
             elif seq == last:
-                curr += 1
+                sum += count
+                count = 0
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 print('window received properly. ACK sent')
                 break_count = 0
-            else:
-                curr += 1
             # time.sleep(0.1)
 
         print("Game received")
-        print(curr)
-        data = b"".join(packets[:curr])  # Join all the packets to one data
+        data = b"".join(packets[:sum])  # Join all the packets to one data
         packetGame = Packet.PacketGame()  # Create a packet to deserialize the game
         packetGame.deserialize(data)  # Deserialize the game from received data
         self.game = packetGame.game  # Update the game
