@@ -217,10 +217,14 @@ class Client:
             # time.sleep(0.1)
 
         print(f"Game received")
-        data = b""
+        count = 0
         for packet in packets:
-            if packet is not None:
-                data.join(packet)
+            if packet is None:
+                break
+            else:
+                count += 1
+        data = b"".join(packets[:count])
+
         packetGame = Packet.PacketGame()  # Create a packet to deserialize the game
         packetGame.deserialize(data)  # Deserialize the game from received data
         self.game = packetGame.game  # Update the game
