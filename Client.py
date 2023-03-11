@@ -176,7 +176,6 @@ class Client:
         packets = [None] * 64
         print("Loading game...")
         break_count = 0
-        sum = 0
         while True:
             try:
                 packet, addr = self.client_socket_udp.recvfrom(2048)  # Receive a packet from the server
@@ -211,15 +210,17 @@ class Client:
                 count = 0
                 print('something went wrong. NACK sent')
             elif seq == last:
-                sum += count
                 count = 0
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 print('window received properly. ACK sent')
                 break_count = 0
             # time.sleep(0.1)
 
-        print(f"Game received in {sum} packets")
-        data = b"".join(packets[:sum])  # Join all the packets to one data
+        print(f"Game received")
+        data = b""
+        for packet in packets:
+            if packet is not None:
+                data.join(packet)
         packetGame = Packet.PacketGame()  # Create a packet to deserialize the game
         packetGame.deserialize(data)  # Deserialize the game from received data
         self.game = packetGame.game  # Update the game
