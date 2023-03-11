@@ -230,6 +230,7 @@ class Server:
             if sent_before == sent:
                 break_count += 1
                 if break_count == 10:
+                    self.lock.release()
                     return
             else:
                 break_count = 0
