@@ -184,8 +184,12 @@ class Server:
             try:
                 message, client_address = self.udp_socket.recvfrom(1024)  # receive message from client to get his address
             except socket.timeout:
+                break_count += 1
+                if break_count == 10:
+                    break
                 continue
             if message == b'connect':
+                break_count = 0
                 self.udp_socket.sendto(b'SYNACK', client_address)
                 print('SYNACK sent')
                 try:
@@ -205,6 +209,9 @@ class Server:
     def send_game_rudp(self):
         self.lock.acquire()  # synchronize threads
         client_address = self.three_way_handshake()  # receive message from client to get his address
+        if client_address is None:
+            self.lock.release()
+            return
         print('Sending game using rudp to: ', client_address)
         packet_game = Packet.PacketGame(self.game)
         data = packet_game.serialize()

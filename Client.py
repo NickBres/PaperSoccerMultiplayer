@@ -137,7 +137,9 @@ class Client:
         packet = Packet.Packet("update")  # Ask the server to update the game
         self.client_socket.sendall(packet.serialize())
         # self.get_game_from_server(client_socket) # TCP
-        self.get_game_from_server_udp()
+        isUpdated = self.get_game_from_server_udp()
+        if not isUpdated:
+            return self.ask_for_update()
         self.view.set_game(self.game)  # Update the view with the new game
         if not self.isGameInitialized and self.game.state == 'play':  # If the game wasn't initialized
             self.isGameInitialized = True
@@ -181,7 +183,7 @@ class Client:
                 print("Timeout")
                 break_count += 1
                 if break_count == 10:
-                    return
+                    return False
                 continue
             if packet == b"END":
                 print("Game received")
@@ -218,6 +220,7 @@ class Client:
         packetGame.deserialize(data)  # Deserialize the game from received data
         self.game = packetGame.game  # Update the game
         print("Game deserialized")
+        return True
 
     def ask_for_update(self):
         print("Asking for update...")
