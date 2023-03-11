@@ -35,7 +35,6 @@ class Client:
     view_thread = None
     client_socket = None
     client_socket_udp = None
-    isGameInitialized = False
 
     def __init__(self):
         # self.CLIENT_IP, self.DNS_IP = self.get_ip_from_dhcp()
@@ -142,9 +141,6 @@ class Client:
             self.send_update_failed()
             return self.ask_for_update()
         self.view.set_game(self.game)  # Update the view with the new game
-        if not self.isGameInitialized and self.game.state == 'play':  # If the game wasn't initialized
-            self.isGameInitialized = True
-            self.view.game_init()
         self.view.change_screen()  # Change the screen if needed (e.g. from menu to game)
 
     def get_game_from_server(self, client_socket):

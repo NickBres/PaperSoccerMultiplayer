@@ -5,7 +5,6 @@ import Model
 
 
 class View:
-
     isInitialized = False
     screen_width = 0
     screen_height = 0
@@ -18,8 +17,7 @@ class View:
         self.field = game.field
         self.controller = controller
 
-
-        pygame.display.set_caption('Paper Soccer: ' + self.game.color)
+        pygame.display.set_caption('Paper Soccer ' + self.game.color)
         self.clock = pygame.time.Clock()
         self.change_screen()
 
@@ -33,7 +31,7 @@ class View:
         self.text = self.font.render('Wait', True, 'White')
         self.text_rect = self.text.get_rect(center=(self.screen_width / 4 - 50, self.screen_height / 2))
         self.ball = pygame.sprite.GroupSingle()
-        self.ball.add(Ball(self.field, self.tile_size, self.game))
+        self.ball.add(Ball(self.tile_size, self.game))
 
         # ////////////////////////////////////////////////////////////////////////////////////////
         # /////////////////////////////////may corrupt when run in linux////////////////////////
@@ -44,7 +42,7 @@ class View:
         # ////////////////////////////////////////////////////////////////////////////////////////
 
     def run(self):
-        count = 300
+        count = 1
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -95,7 +93,7 @@ class View:
                 self.points.draw(self.screen)
                 self.points.update()
                 self.ball.draw(self.screen)
-                self.ball.update(self.field)
+                self.ball.update(self.game)
             if self.screen_num == 2:  # end
                 self.screen.blit(self.menu, (0, 0))
                 self.again.draw(self.screen)
@@ -105,7 +103,7 @@ class View:
                 self.text = self.font.render('Wait', True, 'White')
                 self.screen.blit(self.text, self.text_rect)
                 self.ball.draw(self.screen)
-                self.ball.update(self.field)
+                self.ball.update(self.game)
             if self.game.state == 'wait' or self.game.state == 'wait move' or self.game.state == 'not initialized':
                 count -= 1
                 if count == 0:
@@ -120,6 +118,7 @@ class View:
         self.again.add(Button(self.screen_width / 4, self.screen_height / 2 + 200, button, 'Again', 'Again'))
 
     def game_init(self):
+        pygame.display.set_caption('Paper Soccer: ' + self.game.color)
         self.screen = pygame.display.set_mode((self.field.width * self.tile_size, self.field.height * self.tile_size))
         self.grass_tiles = pygame.sprite.Group()
         self.lines = pygame.sprite.GroupSingle()
@@ -179,8 +178,11 @@ class View:
         self.buttons.add(Button(self.screen_width / 4 + 100, self.screen_height / 2 + 100, button2, type='Up2'))
 
     def set_game(self, game):
+        if self.game.state == 'not initialized' and game.state != 'not initialized':
+            self.game_init()
         self.game = game
         self.field = game.field
+        print(f'Game state: {self.game.state} color: {self.game.color}')
 
 
 class Count(pygame.sprite.Sprite):
@@ -233,29 +235,28 @@ class Button(pygame.sprite.Sprite):
 
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, field, tilesize, game):
+    def __init__(self, tilesize, game):
         super().__init__()
-        self.game = game
         self.tile_size = tilesize
         self.ball_b = pygame.image.load('graphics/balls/ball_b.png').convert_alpha()
         self.ball_r = pygame.image.load('graphics/balls/ball_r.png').convert_alpha()
         self.image = self.ball_b
-        self.x = self.tile_size // 2 + (self.tile_size * field.ball.x)
-        self.y = self.tile_size // 2 + (self.tile_size * field.ball.y)
+        self.x = self.tile_size // 2 + (self.tile_size * game.field.ball.x)
+        self.y = self.tile_size // 2 + (self.tile_size * game.field.ball.y)
         self.rect = self.image.get_rect(center=(self.x, self.y))
         self.angle = 0
 
-    def update(self, field):
-        self.x = self.tile_size // 2 + (self.tile_size * field.ball.x)
-        self.y = self.tile_size // 2 + (self.tile_size * field.ball.y)
-        if self.game.state == 'wait':
+    def update(self, game):
+        self.x = self.tile_size // 2 + (self.tile_size * game.field.ball.x)
+        self.y = self.tile_size // 2 + (self.tile_size * game.field.ball.y)
+        if game.state == 'wait':
             self.x = 350
             self.y = 350
-        if self.game.color == 'blue':
+        if game.color == 'blue':
             self.image = self.ball_b
         else:
             self.image = self.ball_r
-        if self.game.state == 'wait' or self.game.state == 'play':
+        if game.state == 'wait' or game.state == 'play' or game.state == 'not initialized':
             self.angle += 5
             angle = self.angle % 360
             self.image = pygame.transform.rotate(self.image, angle)
