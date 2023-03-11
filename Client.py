@@ -200,10 +200,9 @@ class Client:
             first = int(first)  # 1 if first in window, 2 if last in window
             last = int(last)
             print(f"Received packet {seq} in window ({first} : {last})")
+            if packets[first] is None:
+                curr = first
             packets[seq] = part  # Add the data to the packets list
-
-            if seq == first:
-                curr = seq
 
             if seq == last and curr != seq:  # If the sequence number is not the expected one
                 print(f'got {seq} expected {curr}')
