@@ -103,7 +103,7 @@ class Server:
             client_socket.send(packet.serialize())
 
         elif packet.message == 'update':  # player wants to update the game
-            print('update request received')
+            print('update')
             if self.isGameStarted:
                 if self.players['blue'] == address:  # blue player
                     print('blue player update request received')
