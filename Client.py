@@ -191,11 +191,13 @@ class Client:
                 print("Game received")
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 break
-            if packet == b"SYNACK":
-                continue
 
-            part, seq, first, last = packet.split(
-                SEPARATOR.encode())  # Split the packet to the data, the sequence number and the window size
+            try:
+                part, seq, first, last = packet.split(
+                    SEPARATOR.encode())  # Split the packet to the data, the sequence number and the window size
+            except ValueError:
+                print("Error in packet")
+                continue
             seq = int(seq)
             first = int(first)  # 1 if first in window, 2 if last in window
             last = int(last)
@@ -209,9 +211,11 @@ class Client:
                 self.client_socket_udp.sendto(b"NACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 window_size = last - first + 1
                 curr = max(0, curr - window_size)
+                print('something went wrong. NACK sent')
             elif seq == last:
                 curr += 1
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
+                print('window received properly. ACK sent')
             else:
                 curr += 1
             # time.sleep(0.1)
