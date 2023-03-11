@@ -236,13 +236,13 @@ class Server:
                     elif window_size + sent < threshold:  # congestion avoidance
                         window_size += 1
                 else:  # if packet was lost
-                    sent -= max(window_size, 1)
+                    sent = max(sent - window_size, 0)
                     window_size = max(window_size // 2, 1)
                     threshold = max(threshold // 2, 1)
                     print("Packet lost")
                     print(f"Sent {sent} packets, window size: {window_size}, threshold: {threshold}")
             except socket.timeout:
-                sent -= max(window_size, 1)
+                sent = max(sent - window_size, 0)
                 window_size = max(window_size // 2, 1)
                 threshold = max(threshold // 2, 1)
             self.udp_socket.settimeout(None)

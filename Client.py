@@ -17,7 +17,7 @@ class Client:
     # ///////////////////////////////////////
     # //       Dont forget to check        //
     # ///////////////////////////////////////
-    DEVICE = "enp0s1"  # en0 for mac, enp0s1 for VM ubuntu
+    DEVICE = "en0"  # en0 for mac, enp0s1 for VM ubuntu
     # ///////////////////////////////////////
 
     CLIENT_PORT = 5050
@@ -156,7 +156,7 @@ class Client:
             self.client_socket_udp.sendto(b"connect", (
                 self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
             try:
-                packet, addr = self.client_socket_udp.recvfrom(2048)  # Receive SynAck from the server
+                packet, addr = self.client_socket_udp.recvfrom(1024)  # Receive SynAck from the server
             except socket.timeout:
                 print("Timeout No SynAck")
                 continue
