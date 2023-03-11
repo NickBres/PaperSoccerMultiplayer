@@ -17,7 +17,7 @@ class Client:
     # ///////////////////////////////////////
     # //       Dont forget to check        //
     # ///////////////////////////////////////
-    DEVICE = "enp0s1"  # en0 for mac, enp0s1 for VM ubuntu
+    DEVICE = "en0"  # en0 for mac, enp0s1 for VM ubuntu
     # ///////////////////////////////////////
 
     CLIENT_PORT = 5050

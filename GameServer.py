@@ -73,8 +73,7 @@ class Server:
             self.game.set_state('menu')
             self.game.set_color('blue')
             self.add_player(address, 'blue')
-            # self.send_game(client_socket)  # tcp
-            self.send_game_rudp()
+            self.isSomethingChanged['blue'] = True  # update blue player when asked
         elif packet.message == 'connect' and not self.is_server_full():  # red player
             print('second player connected')
             self.game.set_state('wait')
@@ -83,8 +82,7 @@ class Server:
                 color = 'blue'
             self.game.set_color(color)
             self.add_player(address, color)
-            # self.send_game(client_socket) # tcp
-            self.send_game_rudp()
+            self.isSomethingChanged[color] = True
         elif packet.message == 'options':  # player sent options for the game
             print('options received')
             packet_options = Packet.PacketOptions()  # create a packet object
@@ -169,8 +167,6 @@ class Server:
                 self.game.set_color('red')
                 self.game.set_state('wait')
                 self.isSomethingChanged['red'] = True
-            # self.send_game(client_socket)  # tcp
-            self.send_game_rudp()
 
     def restart_game(self):
         if self.isGameOver:
