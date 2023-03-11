@@ -193,10 +193,9 @@ class Server:
                     print('Client did not connect')
                     return None
                 continue
-
             if message == b'connect':
+                break_count = 0
                 while True:
-                    break_count = 0
                     self.udp_socket.sendto(b'SYNACK', client_address)
                     print('SYNACK sent')
                     try:
