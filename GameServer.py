@@ -135,6 +135,7 @@ class Server:
                 self.isSomethingChanged['blue'] = True
             elif self.players['red'] == address:
                 self.isSomethingChanged['red'] = True
+            print('sending update request again')
         elif packet.message == 'move':  # player wants to move
             packet_move = Packet.PacketMove()  # create a packet object
             packet_move.deserialize(bpacket)  # deserialize data from client and fill the packet object
