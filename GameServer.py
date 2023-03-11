@@ -187,6 +187,7 @@ class Server:
                 continue
             if message == b'connect':
                 self.udp_socket.sendto(b'SYNACK', client_address)
+                print('SYNACK sent')
                 try:
                     message, client_address = self.udp_socket.recvfrom(1024)  # receive ACK
                 except socket.timeout:
@@ -225,6 +226,7 @@ class Server:
                     data = packets[i] + SEPARATOR.encode() + str(i).encode() + SEPARATOR.encode() + str(
                         sent).encode() + SEPARATOR.encode() + str(last).encode()
                     self.udp_socket.sendto(data, client_address)
+                    print("Sent packet " + str(i) + " of " + str(len(packets)))
                 except socket.error:
                     print("Error sending packet")
                     break
