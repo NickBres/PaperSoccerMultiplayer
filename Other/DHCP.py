@@ -3,7 +3,7 @@ from scapy.layers.dhcp import DHCP, BOOTP
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
-DEVICE = "en0"
+DEVICE = "enp0s1"
 DHCP_IP = "127.0.0.2"
 DHCP_PORT = 67
 DNS_IP = "127.0.0.3"
