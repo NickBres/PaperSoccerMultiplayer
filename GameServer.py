@@ -27,7 +27,7 @@ class Server:
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket.bind((self.SERVER_IP, self.SERVER_PORT_UDP))
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.udp_socket.settimeout(5)
+        self.udp_socket.settimeout(3)
 
         # Create a TCP socket to connect between players and server
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
@@ -192,21 +192,23 @@ class Server:
                     print('Client did not connect')
                     break
                 continue
+
             if message == b'connect':
-                break_count = 0
-                self.udp_socket.sendto(b'SYNACK', client_address)
-                print('SYNACK sent')
-                try:
-                    message, client_address = self.udp_socket.recvfrom(1024)  # receive ACK
-                except socket.timeout:
-                    break_count += 1
-                    if break_count == 5:
-                        break
-                    continue
-                if message == b'ACK':
-                    print('Client connected')
-                    break
-        return client_address
+                while True:
+                    break_count = 0
+                    self.udp_socket.sendto(b'SYNACK', client_address)
+                    print('SYNACK sent')
+                    try:
+                        message, client_address = self.udp_socket.recvfrom(1024)  # receive ACK
+                    except socket.timeout:
+                        break_count += 1
+                        if break_count == 5:
+                            break
+                        continue
+                    if message == b'ACK':
+                        print('Client connected')
+                        return client_address
+
 
 
 
