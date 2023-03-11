@@ -131,6 +131,12 @@ class Server:
                             self.game.set_state('play')
             # self.send_game(client_socket)  # tcp
             self.send_game_rudp()
+        elif packet.message == 'update failed':
+            print('update failed')
+            if self.players['blue'] == address:
+                self.isSomethingChanged['blue'] = True
+            elif self.players['red'] == address:
+                self.isSomethingChanged['red'] = True
         elif packet.message == 'move':  # player wants to move
             packet_move = Packet.PacketMove()  # create a packet object
             packet_move.deserialize(bpacket)  # deserialize data from client and fill the packet object
@@ -185,7 +191,7 @@ class Server:
                 message, client_address = self.udp_socket.recvfrom(1024)  # receive message from client to get his address
             except socket.timeout:
                 break_count += 1
-                if break_count == 10:
+                if break_count == 5:
                     break
                 continue
             if message == b'connect':
@@ -196,7 +202,7 @@ class Server:
                     message, client_address = self.udp_socket.recvfrom(1024)  # receive ACK
                 except socket.timeout:
                     break_count += 1
-                    if break_count == 10:
+                    if break_count == 5:
                         break
                     continue
                 if message == b'ACK':
@@ -229,7 +235,7 @@ class Server:
         while sent < len(packets):
             if sent_before == sent:
                 break_count += 1
-                if break_count == 10:
+                if break_count == 5:
                     self.lock.release()
                     return
             else:
@@ -277,7 +283,7 @@ class Server:
                 ack = self.udp_socket.recv(1024).decode()
             except socket.timeout:
                 break_count += 1
-                if break_count == 10:
+                if break_count == 5:
                     break
                 continue
             if ack == "ACK":

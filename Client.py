@@ -139,6 +139,8 @@ class Client:
         # self.get_game_from_server(client_socket) # TCP
         isUpdated = self.get_game_from_server_udp()
         if not isUpdated:
+            packet = Packet.Packet("update failed")  # Ask the server to update the game
+            self.client_socket.sendall(packet.serialize())
             return self.ask_for_update()
         self.view.set_game(self.game)  # Update the view with the new game
         if not self.isGameInitialized and self.game.state == 'play':  # If the game wasn't initialized
@@ -182,7 +184,7 @@ class Client:
             except socket.timeout:
                 print("Timeout")
                 break_count += 1
-                if break_count == 10:
+                if break_count == 5:
                     return False
                 continue
             if packet == b"END":
