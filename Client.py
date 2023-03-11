@@ -17,7 +17,7 @@ class Client:
     # ///////////////////////////////////////
     # //       Dont forget to check        //
     # ///////////////////////////////////////
-    DEVICE = "enp0s1"  # en0 for mac, enp0s1 for VM ubuntu
+    DEVICE = "en0"  # en0 for mac, enp0s1 for VM ubuntu
     # ///////////////////////////////////////
 
     CLIENT_PORT = 5050
@@ -218,7 +218,7 @@ class Client:
                 break_count = 0
             # time.sleep(0.1)
 
-        print("Game received")
+        print(f"Game received in {sum} packets")
         data = b"".join(packets[:sum])  # Join all the packets to one data
         packetGame = Packet.PacketGame()  # Create a packet to deserialize the game
         packetGame.deserialize(data)  # Deserialize the game from received data
