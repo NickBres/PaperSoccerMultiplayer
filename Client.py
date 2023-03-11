@@ -215,6 +215,7 @@ class Client:
                 curr += 1
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 print('window received properly. ACK sent')
+                break_count = 0
             else:
                 curr += 1
             # time.sleep(0.1)
