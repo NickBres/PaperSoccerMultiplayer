@@ -83,6 +83,7 @@ class Server:
             self.game.set_color(color)
             self.add_player(address, color)
             self.isSomethingChanged[color] = True
+            return
         elif packet.message == 'options':  # player sent options for the game
             print('options received')
             packet_options = Packet.PacketOptions()  # create a packet object

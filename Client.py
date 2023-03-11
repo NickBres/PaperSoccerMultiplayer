@@ -236,7 +236,6 @@ class Client:
         packet = Packet.Packet("update?")
         self.client_socket.sendall(packet.serialize())
         data = self.client_socket.recv(1024)
-        print(data)
         packet.deserialize(data)
         if packet.message == "yes":
             print("Update is available")
