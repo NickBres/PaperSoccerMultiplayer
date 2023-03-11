@@ -179,6 +179,7 @@ class Server:
 
     def three_way_handshake(self):
         print('Waiting for client to connect...')
+        break_count = 0
         while True:
             try:
                 message, client_address = self.udp_socket.recvfrom(1024)  # receive message from client to get his address
@@ -189,7 +190,10 @@ class Server:
                 try:
                     message, client_address = self.udp_socket.recvfrom(1024)  # receive ACK
                 except socket.timeout:
-                    break
+                    break_count += 1
+                    if break_count == 10:
+                        break
+                    continue
                 if message == b'ACK':
                     print('Client connected')
                     break
@@ -246,12 +250,16 @@ class Server:
                 window_size = max(window_size // 2, 1)
                 threshold = max(threshold // 2, 1)
             self.udp_socket.settimeout(None)
+        break_count = 0
         while True:  # send end of transmission
             self.udp_socket.sendto(b"END", client_address)  # send end of transmission
             self.udp_socket.settimeout(2)
             try:
                 ack = self.udp_socket.recv(1024).decode()
             except socket.timeout:
+                break_count += 1
+                if break_count == 10:
+                    break
                 continue
             if ack == "ACK":
                 break

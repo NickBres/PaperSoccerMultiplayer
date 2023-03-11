@@ -173,11 +173,15 @@ class Client:
         curr = 0
         packets = [None] * 64
         print("Loading game...")
+        break_count = 0
         while True:
             try:
                 packet, addr = self.client_socket_udp.recvfrom(2048)  # Receive a packet from the server
             except socket.timeout:
                 print("Timeout")
+                break_count += 1
+                if break_count == 10:
+                    return
                 continue
             if packet == b"END":
                 print("Game received")
