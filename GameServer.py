@@ -128,7 +128,10 @@ class Server:
                         if not self.isGameOver:
                             self.game.set_state('play')
             # self.send_game(client_socket)  # tcp
+            temp = self.isSomethingChanged
+            self.isSomethingChanged = {'blue': False, 'red': False}
             self.send_game_rudp()
+            self.isSomethingChanged = temp
         elif packet.message == 'update failed':
             print('update failed')
             if self.players['blue'] == address:
