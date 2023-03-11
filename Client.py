@@ -37,8 +37,9 @@ class Client:
     client_socket_udp = None
 
     def __init__(self):
-        # self.CLIENT_IP, self.DNS_IP = self.get_ip_from_dhcp()
-        # self.GAME_SERVER_IP = self.get_game_ip()
+        self.CLIENT_IP, self.DNS_IP = self.get_ip_from_dhcp()
+        self.GAME_SERVER_IP = self.get_game_ip()
+        self.GAME_SERVER_IP = '127.0.0.1'
         self.connect_to_game()
         print("Done. Starting game...")
 
