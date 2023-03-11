@@ -93,6 +93,7 @@ class Server:
             self.isSomethingChanged['blue'] = True  # update blue player when asked
             self.isSomethingChanged['red'] = True  # update red player when asked
         elif packet.message == 'update?':  # player wants to know if he needs to update the game
+            print('update?')
             packet = Packet.Packet()  # create a packet object
             if self.isNeedToUpdate(address):
                 print('update request approved')
