@@ -224,7 +224,16 @@ class Server:
             packets.append(data[i:i + packet_size])
 
         threshold = len(packets)  # threshold for congestion control
+        break_count = 0
+        sent_before = 0
         while sent < len(packets):
+            if sent_before == sent:
+                break_count += 1
+                if break_count == 10:
+                    return
+            else:
+                break_count = 0
+                sent_before = sent
             for i in range(sent, sent + window_size):  # send packets in window
                 if i >= len(packets):
                     break
