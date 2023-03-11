@@ -189,6 +189,8 @@ class Client:
                 print("Game received")
                 self.client_socket_udp.sendto(b"ACK", (self.GAME_SERVER_IP, self.GAME_SERVER_PORT_UDP))
                 break
+            if packet == b"SYNACK":
+                continue
 
             part, seq, first, last = packet.split(
                 SEPARATOR.encode())  # Split the packet to the data, the sequence number and the window size
