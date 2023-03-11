@@ -235,11 +235,8 @@ class Client:
         print("Asking for update...")
         packet = Packet.Packet("update?")
         self.client_socket.sendall(packet.serialize())
-        try:
-            data = self.client_socket.recv(1024)
-        except socket.timeout:
-            print("Timeout")
-            return self.ask_for_update()
+        data = self.client_socket.recv(1024)
+        print(data)
         packet.deserialize(data)
         if packet.message == "yes":
             print("Update is available")
