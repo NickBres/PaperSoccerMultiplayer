@@ -17,7 +17,7 @@ class Client:
     # ///////////////////////////////////////
     # //       Dont forget to check        //
     # ///////////////////////////////////////
-    DEVICE = "enp0s1"  # en0 for mac, enp0s1 for VM ubuntu
+    DEVICE = "en0"  # en0 for mac, enp0s1 for VM ubuntu
     # ///////////////////////////////////////
 
     CLIENT_PORT = 5050
@@ -119,6 +119,7 @@ class Client:
     def connect_to_game(self):
         print("Connecting to game server...")
         self.client_socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP socket for receiving game data
+        self.client_socket_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.client_socket_udp.settimeout(2)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  # TCP socket for sending commands
             client_socket.connect((self.GAME_SERVER_IP, self.GAME_SERVER_PORT))
@@ -126,7 +127,6 @@ class Client:
             self.client_socket = client_socket
             packet = Packet.Packet("connect")  # Ask the server to connect the client to the game
             client_socket.sendall(packet.serialize())
-            # self.get_game_from_server(client_socket)  # TCP
             self.view = View.View(self)  # Create the view (GUI)
             self.view.run()  # Start the view
 
@@ -178,7 +178,7 @@ class Client:
         break_count = 0
         while True:
             try:
-                packet, addr = self.client_socket_udp.recvfrom(2048)  # Receive a packet from the server
+                packet, addr = self.client_socket_udp.recvfrom(6000)  # Receive a packet from the server
             except socket.timeout:
                 print("Timeout")
                 break_count += 1
