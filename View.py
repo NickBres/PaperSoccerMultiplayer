@@ -7,15 +7,18 @@ import Model
 class View:
 
     isInitialized = False
-    def __init__(self, controller, game):
+    screen_width = 0
+    screen_height = 0
+    tile_size = 70
+    screen_num = 3  # 0 - menu, 1 - game, 2 - end, 3 - wait
+
+    def __init__(self, controller, game=Model.Game()):
         pygame.init()
         self.game = game
         self.field = game.field
-        self.screen_num = 3  # 0 - menu, 1 - game, 2 - end, 3 - wait
         self.controller = controller
-        self.tile_size = 70
-        self.screen_width = 0
-        self.screen_height = 0
+
+
         pygame.display.set_caption('Paper Soccer: ' + self.game.color)
         self.clock = pygame.time.Clock()
         self.change_screen()
@@ -35,9 +38,9 @@ class View:
         # ////////////////////////////////////////////////////////////////////////////////////////
         # /////////////////////////////////may corrupt when run in linux////////////////////////
         # ////////////////////////////////////////////////////////////////////////////////////////
-        #self.click = pygame.mixer.Sound('sound/click.mp3')
-        #self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
-        #self.win = pygame.mixer.Sound('sound/win.mp3')
+        # self.click = pygame.mixer.Sound('sound/click.mp3')
+        # self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
+        # self.win = pygame.mixer.Sound('sound/win.mp3')
         # ////////////////////////////////////////////////////////////////////////////////////////
 
     def run(self):
@@ -54,7 +57,7 @@ class View:
                             for tile in self.grass_tiles:
                                 if tile.check_click(event.pos):
                                     self.controller.send_move(tile.x // self.tile_size, tile.y // self.tile_size)
-                                    #self.kick_sound.play()
+                                    # self.kick_sound.play()
                         else:
                             print('Wait for your turn')
 
@@ -62,7 +65,7 @@ class View:
                     if event.type == pygame.MOUSEBUTTONUP:
                         for button in self.buttons:
                             if button.check_click(event.pos):
-                                #self.click.play()
+                                # self.click.play()
                                 if button.type == 'Up1':
                                     self.counts.sprites()[0].increase()
                                 if button.type == 'Down1':
@@ -78,9 +81,8 @@ class View:
                 if self.screen_num == 2:  # end
                     if event.type == pygame.MOUSEBUTTONUP:
                         if self.again.sprite.check_click(event.pos):
-                            #self.click.play()
+                            # self.click.play()
                             self.controller.send_again()
-
 
             if self.screen_num == 0:  # menu
                 self.screen.blit(self.menu, (0, 0))
@@ -104,13 +106,11 @@ class View:
                 self.screen.blit(self.text, self.text_rect)
                 self.ball.draw(self.screen)
                 self.ball.update(self.field)
-            if self.game.state == 'wait' or self.game.state == 'wait move':
+            if self.game.state == 'wait' or self.game.state == 'wait move' or self.game.state == 'not initialized':
                 count -= 1
                 if count == 0:
                     self.controller.ask_for_update()
                     count = 300
-
-
 
             pygame.display.update()
             self.clock.tick(60)  # limit the loop to 60 times per sec
@@ -140,7 +140,7 @@ class View:
             self.screen_width = 10 * self.tile_size
             self.screen_height = 10 * self.tile_size
             self.text = self.font.render(self.game.state, True, 'White')
-            #self.win.play()
+            # self.win.play()
         if screen_num == 1:  # game
             if not self.isInitialized:
                 self.game_init()
@@ -178,7 +178,7 @@ class View:
         self.counts.add(Count(self.screen_width / 4, self.screen_height / 2 + 100, 13))
         self.buttons.add(Button(self.screen_width / 4 + 100, self.screen_height / 2 + 100, button2, type='Up2'))
 
-    def set_game(self,game):
+    def set_game(self, game):
         self.game = game
         self.field = game.field
 

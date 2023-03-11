@@ -128,9 +128,9 @@ class Client:
             packet = Packet.Packet("connect")  # Ask the server to connect the client to the game
             client_socket.sendall(packet.serialize())
             # self.get_game_from_server(client_socket)  # TCP
-            self.get_game_from_server_udp()
-            self.view = View.View(self, self.game)  # Create the view (GUI)
+            self.view = View.View(self)  # Create the view (GUI)
             self.view.run()  # Start the view
+
 
     def game_update(self):
         print("Updating game...")
@@ -139,8 +139,7 @@ class Client:
         # self.get_game_from_server(client_socket) # TCP
         isUpdated = self.get_game_from_server_udp()
         if not isUpdated:
-            packet = Packet.Packet("update failed")  # Ask the server to update the game
-            self.client_socket.sendall(packet.serialize())
+            self.send_update_failed()
             return self.ask_for_update()
         self.view.set_game(self.game)  # Update the view with the new game
         if not self.isGameInitialized and self.game.state == 'play':  # If the game wasn't initialized
@@ -153,6 +152,10 @@ class Client:
         packet = Packet.PacketGame()  # Create a packet to deserialize the game
         packet.deserialize(data)  # Deserialize the game from received data
         self.game = packet.game
+
+    def send_update_failed(self):
+        packet = Packet.Packet("update failed")  # Ask the server to update the game
+        self.client_socket.sendall(packet.serialize())
 
     def three_way_handshake(self):
         print("Three way handshake...")
@@ -262,10 +265,7 @@ class Client:
         print("Sending again...")
         packet = Packet.Packet("again")  # Create a packet with the message
         self.client_socket.sendall(packet.serialize())  # Send the packet to the server
-        # self.get_game_from_server(self.client_socket) # TCP
-        self.get_game_from_server_udp()
-        self.view = View.View(self, self.game)  # Initialize the view (GUI)
-        self.ask_for_update()  # Ask for an update to get the updated game
+        self.view = View.View(self)  # Initialize the view (GUI)
         self.view.run()  # Start the view
 
     def send_exit(self):  # Send a message to the server about the client's exit

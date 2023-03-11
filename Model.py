@@ -4,7 +4,7 @@ from threading import Lock
 
 
 class Game:
-    color = 'white'
+    color = ''
 
     def __init__(self):
         self.field = Field()
