@@ -17,10 +17,10 @@ class Client:
     # ///////////////////////////////////////
     # //       Dont forget to check        //
     # ///////////////////////////////////////
-    DEVICE = "en0"  # en0 for mac, enp0s1 for VM ubuntu
+    DEVICE = "enp0s1"  # en0 for mac, enp0s1 for VM ubuntu
     # ///////////////////////////////////////
 
-    CLIENT_PORT = 5050
+    CLIENT_PORT = 68
     CLIENT_IP = '127.0.0.1'
     CLIENT_MAC = str(get_if_hwaddr(DEVICE))
 
@@ -37,9 +37,10 @@ class Client:
     client_socket_udp = None
 
     def __init__(self):
-        # self.CLIENT_IP, self.DNS_IP = self.get_ip_from_dhcp()
-        # self.GAME_SERVER_IP = self.get_game_ip()
-        # self.GAME_SERVER_IP = '127.0.0.1'
+        self.CLIENT_IP, self.DNS_IP = self.get_ip_from_dhcp()
+        self.GAME_SERVER_IP = self.get_game_ip()
+        self.GAME_SERVER_IP = '127.0.0.1'
+        self.CLIENT_PORT = 5050
         self.connect_to_game()
 
     def get_ip_from_dhcp(self):
