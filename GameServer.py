@@ -186,12 +186,14 @@ class Server:
     def three_way_handshake(self):
         print('Waiting for client to connect...')
         break_count = 0
+        client_address = None
         while True:
             try:
                 message, client_address = self.udp_socket.recvfrom(1024)  # receive message from client to get his address
             except socket.timeout:
                 break_count += 1
                 if break_count == 5:
+                    print('Client did not connect')
                     break
                 continue
             if message == b'connect':
