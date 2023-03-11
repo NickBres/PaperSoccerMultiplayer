@@ -93,6 +93,7 @@ class Server:
             self.isGameStarted = True
             self.isSomethingChanged['blue'] = True  # update blue player when asked
             self.isSomethingChanged['red'] = True  # update red player when asked
+
         elif packet.message == 'update?':  # player wants to know if he needs to update the game
             print('update?')
             packet = Packet.Packet()  # create a packet object
@@ -229,7 +230,7 @@ class Server:
         SEPARATOR = "<BARAK>"
         sent = 0
         window_size = 1
-        packet_size = 1024
+        packet_size = 4096
         packets = []
         for i in range(0, len(data), packet_size):  # split data into packets
             packets.append(data[i:i + packet_size])
