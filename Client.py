@@ -11,13 +11,14 @@ from random import randint
 import Model
 import View
 import Packet
+import platform
 
 
 class Client:
     # ///////////////////////////////////////
     # //       Dont forget to check        //
     # ///////////////////////////////////////
-    DEVICE = "enp0s1"  # en0 for mac, enp0s1 for VM ubuntu
+    DEVICE = "en0"  # en0 for mac, enp0s1 for VM ubuntu
     # ///////////////////////////////////////
 
     CLIENT_PORT = 68
@@ -37,6 +38,16 @@ class Client:
     client_socket_udp = None
 
     def __init__(self):
+        plat = platform.system()
+        if plat == 'Darwin':
+            self.DEVICE = 'en0'
+        elif plat == 'Linux':
+            self.DEVICE = 'enp0s1'
+        else:
+            print('Unknown platform. Enter device name manually:')
+            self.DEVICE = input()
+        self.CLIENT_MAC = str(get_if_hwaddr(self.DEVICE))
+
         self.CLIENT_IP, self.DNS_IP = self.get_ip_from_dhcp()
         self.GAME_SERVER_IP = self.get_game_ip()
         self.GAME_SERVER_IP = '127.0.0.1'

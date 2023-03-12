@@ -2,13 +2,22 @@ from scapy.all import *
 from scapy.layers.dhcp import DHCP, BOOTP
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
+import platform
 
-DEVICE = "enp0s1"
+DEVICE = "en0"
 DHCP_IP = "127.0.0.2"
 DHCP_PORT = 67
 DNS_IP = "127.0.0.3"
 
 if __name__ == "__main__":
+    plat = platform.system()
+    if plat == 'Linux':
+        DEVICE = "enp0s1"
+    elif plat == 'Darwin':
+        DEVICE = "en0"
+    else:
+        print("Error: Unknown platform. Enter the name of the network interface manually:")
+        DEVICE = input()
     dhcp_mac = str(get_if_hwaddr(DEVICE))
 
     dhcp_pool = {'127.0.0.5': True,

@@ -34,6 +34,7 @@ class View:
         self.ball = pygame.sprite.GroupSingle()
         self.ball.add(Ball(self.tile_size, self.game))
         self.isSound = False
+        print(platform.system())
         if not platform.system() == 'Linux':
             print(f'your system is {platform.system()}. sound is on')
             self.isSound = True
