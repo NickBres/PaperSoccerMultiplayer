@@ -143,7 +143,8 @@ class View:
             self.screen_width = 10 * self.tile_size
             self.screen_height = 10 * self.tile_size
             self.text = self.font.render(self.game.state, True, 'White')
-            # self.win.play()
+            if self.isSound:
+                self.win.play()
         if screen_num == 1:  # game
             if not self.isInitialized:
                 self.game_init()

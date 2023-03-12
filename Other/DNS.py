@@ -4,21 +4,14 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 import socket
-import platform
 
 DEVICE = "en0"
 DNS_PORT = 53
 DNS_IP = "127.0.0.3"
 
 if __name__ == "__main__":
-    plat = platform.system()
-    if plat == 'Linux':
-        DEVICE = "enp0s1"
-    elif plat == 'Darwin':
-        DEVICE = "en0"
-    else:
-        print("Error: Unknown platform. Enter the name of the network interface manually:")
-        DEVICE = input()
+    print('Enter the name of the network interface manually:')
+    DEVICE = input()
     dhcp_mac = str(get_if_hwaddr(DEVICE))
 
     dns_pool = {'PaperSoccer': "127.0.0.1"}

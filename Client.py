@@ -40,25 +40,14 @@ class Client:
     client_socket_udp = None
 
     def __init__(self):
+        print('Enter the name of the network interface manually:')
+        self.DEVICE = input()
+        self.CLIENT_MAC = str(get_if_hwaddr(self.DEVICE))
         self.CLIENT_IP, self.DNS_IP = self.get_ip_from_dhcp()
         self.GAME_SERVER_IP = self.get_game_ip()
         self.GAME_SERVER_IP = '127.0.0.1'
         self.CLIENT_PORT = 5050
         self.connect_to_game()
-        plat = platform.system()
-        print(f'Platform: {plat}')
-        if plat == 'Linux':
-            self.DEVICE = 'enp0s1'
-        elif plat == 'Darwin': # Mac
-            self.DEVICE = 'en0'
-        else:
-            print('Unknown platform. Enter device name manually:')
-            self.DEVICE = input()
-        try:
-            self.CLIENT_MAC = str(get_if_hwaddr(self.DEVICE))
-        except:
-            print("Error: Can't get MAC address")
-            exit(1)
 
 
 
