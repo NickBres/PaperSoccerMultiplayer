@@ -1,5 +1,6 @@
 import pickle
 import time
+import platform
 
 from scapy.all import *
 from scapy.layers.dhcp import DHCP, BOOTP
@@ -8,21 +9,23 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 from random import randint
 
+
 import Model
 import View
 import Packet
+
 
 
 class Client:
     # ///////////////////////////////////////
     # //       Dont forget to check        //
     # ///////////////////////////////////////
-    DEVICE = "enp0s1"  # en0 for mac, enp0s1 for VM ubuntu
+    DEVICE = None  # en0 for mac, enp0s1 for VM ubuntu
     # ///////////////////////////////////////
 
     CLIENT_PORT = 68
     CLIENT_IP = '127.0.0.1'
-    CLIENT_MAC = str(get_if_hwaddr(DEVICE))
+    CLIENT_MAC = None
 
     DHCP_PORT = 67
     DNS_IP = None
@@ -42,6 +45,22 @@ class Client:
         self.GAME_SERVER_IP = '127.0.0.1'
         self.CLIENT_PORT = 5050
         self.connect_to_game()
+        plat = platform.system()
+        print(f'Platform: {plat}')
+        if plat == 'Linux':
+            self.DEVICE = 'enp0s1'
+        elif plat == 'Darwin': # Mac
+            self.DEVICE = 'en0'
+        else:
+            print('Unknown platform. Enter device name manually:')
+            self.DEVICE = input()
+        try:
+            self.CLIENT_MAC = str(get_if_hwaddr(self.DEVICE))
+        except:
+            print("Error: Can't get MAC address")
+            exit(1)
+
+
 
     def get_ip_from_dhcp(self):
         print("Broadcasting DHCP request...")
