@@ -2,6 +2,7 @@ import time
 
 import pygame
 import Model
+import sys
 
 
 class View:
@@ -32,14 +33,13 @@ class View:
         self.text_rect = self.text.get_rect(center=(self.screen_width / 4 - 50, self.screen_height / 2))
         self.ball = pygame.sprite.GroupSingle()
         self.ball.add(Ball(self.tile_size, self.game))
-
-        # ////////////////////////////////////////////////////////////////////////////////////////
-        # /////////////////////////////////may corrupt when run in linux////////////////////////
-        # ////////////////////////////////////////////////////////////////////////////////////////
-        # self.click = pygame.mixer.Sound('sound/click.mp3')
-        # self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
-        # self.win = pygame.mixer.Sound('sound/win.mp3')
-        # ////////////////////////////////////////////////////////////////////////////////////////
+        self.isSound = False
+        if not sys.platform() == 'linux':
+            print(f'your system is {sys.platform()}. sound is on')
+            self.isSound = True
+            self.click = pygame.mixer.Sound('sound/click.mp3')
+            self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
+            self.win = pygame.mixer.Sound('sound/win.mp3')
 
     def run(self):
         count = 1
@@ -55,7 +55,8 @@ class View:
                             for tile in self.grass_tiles:
                                 if tile.check_click(event.pos):
                                     self.controller.send_move(tile.x // self.tile_size, tile.y // self.tile_size)
-                                    # self.kick_sound.play()
+                                    if self.isSound:
+                                        self.kick_sound.play()
                         else:
                             print('Wait for your turn')
 
@@ -63,7 +64,8 @@ class View:
                     if event.type == pygame.MOUSEBUTTONUP:
                         for button in self.buttons:
                             if button.check_click(event.pos):
-                                # self.click.play()
+                                if self.isSound:
+                                    self.click.play()
                                 if button.type == 'Up1':
                                     self.counts.sprites()[0].increase()
                                 if button.type == 'Down1':
@@ -79,7 +81,8 @@ class View:
                 if self.screen_num == 2:  # end
                     if event.type == pygame.MOUSEBUTTONUP:
                         if self.again.sprite.check_click(event.pos):
-                            # self.click.play()
+                            if self.isSound:
+                                self.click.play()
                             self.controller.send_again()
 
             if self.screen_num == 0:  # menu
