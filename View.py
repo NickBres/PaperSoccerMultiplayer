@@ -2,7 +2,7 @@ import time
 
 import pygame
 import Model
-import sys
+import platform
 
 
 class View:
@@ -34,8 +34,8 @@ class View:
         self.ball = pygame.sprite.GroupSingle()
         self.ball.add(Ball(self.tile_size, self.game))
         self.isSound = False
-        if not sys.platform() == 'linux':
-            print(f'your system is {sys.platform()}. sound is on')
+        if not platform.system() == 'Linux':
+            print(f'your system is {platform.system()}. sound is on')
             self.isSound = True
             self.click = pygame.mixer.Sound('sound/click.mp3')
             self.kick_sound = pygame.mixer.Sound('sound/kick.mp3')
