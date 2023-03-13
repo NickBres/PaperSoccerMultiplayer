@@ -30,7 +30,7 @@ Apllication server in our case is Game Server manages all the game data and its 
 
 Full description of the project you can find [here](https://github.com/NickBres/Project/blob/master/readme.pdf) (Hebrew).
 
-Also you can see the demonstration video [here](https://youtu.be/lagbQ4JMk3g).
+Also you can watch the demonstration video [here](https://youtu.be/lagbQ4JMk3g).
 
 ## Game pictures
 
