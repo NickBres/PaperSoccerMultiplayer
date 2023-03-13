@@ -1,4 +1,4 @@
-# Final Project in Computer Networking Course
+# Final Project in the Computer Networking Course
 
 ## Main goal
 
